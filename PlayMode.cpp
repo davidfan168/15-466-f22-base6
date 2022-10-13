@@ -77,6 +77,11 @@ void PlayMode::update(float elapsed) {
 	controls.down.downs = 0;
 	controls.jump.downs = 0;
 
+	// end the game if someone gets 5 points
+	if (game.score1 >= 5 || game.score2 >= 5) {
+		return;
+	}
+
 	//send/receive data:
 	client.poll([this](Connection *c, Connection::Event event){
 		if (event == Connection::OnOpen) {
@@ -147,13 +152,27 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 				glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 		};
 
-		lines.draw(glm::vec3(Game::ArenaMin.x, Game::ArenaMin.y, 0.0f), glm::vec3(Game::ArenaMax.x, Game::ArenaMin.y, 0.0f), glm::u8vec4(0xff, 0x00, 0xff, 0xff));
-		lines.draw(glm::vec3(Game::ArenaMin.x, Game::ArenaMax.y, 0.0f), glm::vec3(Game::ArenaMax.x, Game::ArenaMax.y, 0.0f), glm::u8vec4(0xff, 0x00, 0xff, 0xff));
-		lines.draw(glm::vec3(Game::ArenaMin.x, Game::ArenaMin.y, 0.0f), glm::vec3(Game::ArenaMin.x, Game::ArenaMax.y, 0.0f), glm::u8vec4(0xff, 0x00, 0xff, 0xff));
-		lines.draw(glm::vec3(Game::ArenaMax.x, Game::ArenaMin.y, 0.0f), glm::vec3(Game::ArenaMax.x, Game::ArenaMax.y, 0.0f), glm::u8vec4(0xff, 0x00, 0xff, 0xff));
+		lines.draw(glm::vec3(Game::ArenaMin.x, Game::ArenaMin.y, 0.0f), glm::vec3(Game::ArenaMin.x, Game::ArenaMax.y, 0.0f), glm::u8vec4(0xff, 0x00, 0x00, 0xff));
+		lines.draw(glm::vec3(Game::ArenaMax.x, Game::ArenaMin.y, 0.0f), glm::vec3(Game::ArenaMax.x, Game::ArenaMax.y, 0.0f), glm::u8vec4(0xff, 0x00, 0x00, 0xff));
+
+		lines.draw(glm::vec3(Game::ArenaMin.x, Game::ArenaMin.y, 0.0f), glm::vec3(Game::GoalMin, Game::ArenaMin.y, 0.0f), glm::u8vec4(0xff, 0x00, 0x00, 0xff));
+		lines.draw(glm::vec3(Game::GoalMin, Game::ArenaMin.y, 0.0f), glm::vec3(Game::GoalMax, Game::ArenaMin.y, 0.0f), glm::u8vec4(0x00, 0xff, 0x00, 0xff));
+		lines.draw(glm::vec3(Game::GoalMax, Game::ArenaMin.y, 0.0f), glm::vec3(Game::ArenaMax.x, Game::ArenaMin.y, 0.0f), glm::u8vec4(0xff, 0x00, 0x00, 0xff));
+		lines.draw(glm::vec3(Game::ArenaMin.x, Game::ArenaMax.y, 0.0f), glm::vec3(Game::GoalMin, Game::ArenaMax.y, 0.0f), glm::u8vec4(0xff, 0x00, 0x00, 0xff));
+		lines.draw(glm::vec3(Game::GoalMin, Game::ArenaMax.y, 0.0f), glm::vec3(Game::GoalMax, Game::ArenaMax.y, 0.0f), glm::u8vec4(0x00, 0xff, 0x00, 0xff));
+		lines.draw(glm::vec3(Game::GoalMax, Game::ArenaMax.y, 0.0f), glm::vec3(Game::ArenaMax.x, Game::ArenaMax.y, 0.0f), glm::u8vec4(0xff, 0x00, 0x00, 0xff));
+
+		lines.draw(glm::vec3(Game::ArenaMin.x, 0.0f, 0.0f), glm::vec3(Game::ArenaMax.x, 0.0f, 0.0f), glm::u8vec4(0xc0, 0x00, 0x00, 0xff));
 
 		for (auto const &player : game.players) {
-			glm::u8vec4 col = glm::u8vec4(player.color.x*255, player.color.y*255, player.color.z*255, 0xff);
+			glm::u8vec4 col;
+			if (player.name == "Player 1") {
+				col = glm::u8vec4(0xff, 0x30, 0xff, 0xff);
+			}
+			else {
+				col = glm::u8vec4(0x50, 0x80, 0xff, 0xff);
+			}
+
 			if (&player == &game.players.front()) {
 				//mark current player (which server sends first):
 				lines.draw(
@@ -175,7 +194,41 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 				);
 			}
 
-			draw_text(player.position + glm::vec2(0.0f, -0.1f + Game::PlayerRadius), player.name, 0.09f);
+			draw_text(player.position + glm::vec2(0.0f, -0.1f), player.name, 0.09f);
+		}
+
+		// ball
+		for (uint32_t a = 0; a < circle.size(); ++a) {
+			lines.draw(
+				glm::vec3(game.ball.position + Game::BallRadius * circle[a], 0.0f),
+				glm::vec3(game.ball.position + Game::BallRadius * circle[(a+1)%circle.size()], 0.0f),
+				glm::u8vec4(0xff, 0xff, 0xff, 0xff)
+			);
+		}
+
+		if (game.players.front().name == "Player 1") {
+			draw_text(glm::vec2(1.0f, -0.9f), "Your Score: " + std::to_string(game.score1), 0.09f);
+			draw_text(glm::vec2(1.0f, 0.9f), "Opponent Score: " + std::to_string(game.score2), 0.09f);
+			if (game.score1 >= 5) {
+				draw_text(glm::vec2(-0.2f, 0.0f), "You Win!", 0.2f);
+			}
+			else {
+				if (game.score2 >= 5) {
+					draw_text(glm::vec2(-0.2f, 0.0f), "You Lose!", 0.2f);
+				}
+			}
+		}
+		else {
+			draw_text(glm::vec2(1.0f, 0.9f), "Your Score: " + std::to_string(game.score2), 0.09f);
+			draw_text(glm::vec2(1.0f, -0.9f), "Opponent Score: " + std::to_string(game.score1), 0.09f);
+			if (game.score2 >= 5) {
+				draw_text(glm::vec2(-0.2f, 0.0f), "You Win!", 0.2f);
+			}
+			else {
+				if (game.score1 >= 5) {
+					draw_text(glm::vec2(-0.2f, 0.0f), "You Lose!", 0.2f);
+				}
+			}
 		}
 	}
 	GL_ERRORS();

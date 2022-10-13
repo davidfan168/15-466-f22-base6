@@ -72,12 +72,15 @@ int main(int argc, char **argv) {
 					//client connected:
 
 					//create some player info for them:
-					connection_to_player.emplace(c, game.spawn_player());
+					if (game.player_cnt < 2) {
+						connection_to_player.emplace(c, game.spawn_player());
+					}
 
 				} else if (evt == Connection::OnClose) {
 					//client disconnected:
 
 					remove_connection(c);
+					// won't remove player count
 
 				} else { assert(evt == Connection::OnRecv);
 					//got data from client:
