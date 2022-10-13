@@ -1,10 +1,10 @@
-# (TODO: your game's title)
+# pOng
 
-Author: (TODO: your name)
+Author: David Zelong Fan
 
-Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
+Design: A pong-like game where players try to score the goal and avoid getting scored.
 
-Networking: (TODO: How does your game implement client/server multiplayer? What messages are transmitted? Where in the code?)
+Networking: Networking mostly follows the base code, where all player input is sent to the server. The server will compute the corresponding player position, ball position, and scoring (Game.cpp). These information is then sent back to the player and drawn by the player (PlayMode.cpp).
 
 Screen Shot:
 
@@ -12,9 +12,11 @@ Screen Shot:
 
 How To Play:
 
-(TODO: describe the controls and (if needed) goals/strategy.)
+Use WASD to move. Score 5 goals to win.
 
-Sources: (TODO: list a source URL for any assets you did not create yourself. Make sure you have a license for the asset.)
+Note: The game only accepts the first two connections as player 1 and player 2. I did not plan for reconnections.
+
+Sources:
 
 This game was built with [NEST](NEST.md).
 
